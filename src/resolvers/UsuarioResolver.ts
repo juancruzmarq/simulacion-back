@@ -6,6 +6,8 @@ import { UsuarioCreate } from "./Types/usuario.inputs.types";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import validator from 'validator'
+
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
@@ -21,13 +23,19 @@ export class UsuarioResolver {
     {
       try {
         const password = await bcrypt.hash(usuario.password, HASH_SALT);
+        const isEmail = validator.isEmail(usuario.email)
 
-        const usuarioCreated = usuarioRepository.create({
-          email: usuario.email,
-          password,
-        });
-        await usuarioRepository.save(usuarioCreated);
-        return usuarioCreated;
+        if (isEmail) {
+          const usuarioCreated = usuarioRepository.create({
+            email: usuario.email,
+            password,
+          });
+          await usuarioRepository.save(usuarioCreated);
+          return usuarioCreated;
+        } else{
+          return new ApolloError("Email no valido")
+        }
+        
       } catch (e) {
         console.log(e);
         return new ApolloError("Error al crear el usuario", "500");
